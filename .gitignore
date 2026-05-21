@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Data schedule & timezone user (pakai Railway Volume di production)
+data/*.json

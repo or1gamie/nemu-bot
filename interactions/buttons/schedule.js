@@ -7,6 +7,16 @@ const {
 } = require('discord.js');
 const store = require('../../services/scheduleStore');
 const editSession = require('../../services/editSession');
+const userTimezoneStore = require('../../services/userTimezoneStore');
+const {
+  parseScheduleInput,
+  getTimezoneLabelForUser,
+  needsTimezoneSetup,
+  zoneFromSettzButton,
+  isValidZone,
+} = require('../../utils/parseScheduleDate');
+const { tryCompletePendingAdd } = require('../../utils/completePendingAdd');
+const { buildTimezoneRequiredReply } = require('../../utils/timezoneGate');
 
 function hasAdminRole(interaction) {
   const roleId = process.env.ADMIN_ROLE_ID;
@@ -17,9 +27,33 @@ function hasAdminRole(interaction) {
 module.exports = async function handleScheduleButton(interaction) {
   const parts = interaction.customId.split(':');
   const action = parts[1];
-  const index = Number(parts[2]);
-
   const isAdmin = hasAdminRole(interaction);
+
+  if (action === 'settz') {
+    const zone = zoneFromSettzButton(parts);
+    if (!isValidZone(zone)) {
+      return interaction.reply({
+        content: 'Timezone tombol tidak valid. Pakai `!sched tz +6` atau `!sched tz Asia/Kuala_Lumpur`.',
+        flags: MessageFlags.Ephemeral
+      });
+    }
+    userTimezoneStore.set(interaction.user.id, zone);
+
+    const completed = await tryCompletePendingAdd(interaction.user, interaction.channel);
+    if (completed) {
+      return interaction.reply({
+        content: completed.message,
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    return interaction.reply({
+      content: `Timezone kamu: **${getTimezoneLabelForUser(interaction.user.id)}**`,
+      flags: MessageFlags.Ephemeral
+    });
+  }
+
+  const index = Number(parts[2]);
 
   if (action === 'detail') {
     const schedules = store.getAll(interaction.guildId);
@@ -54,6 +88,13 @@ module.exports = async function handleScheduleButton(interaction) {
       });
     }
 
+    if (needsTimezoneSetup(interaction.user.id)) {
+      return interaction.reply({
+        ...buildTimezoneRequiredReply(),
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
     const schedules = store.getAll(interaction.guildId);
     const sched = schedules[index];
 
@@ -83,19 +124,26 @@ module.exports = async function handleScheduleButton(interaction) {
         const name = parts[0].trim();
         const dateString = parts.slice(1).join(',').trim();
 
-        const match = dateString.match(
-          /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/
-        );
-
-        if (!match) {
-          await message.reply('Date format invalid.');
+        if (needsTimezoneSetup(message.author.id)) {
+          await message.reply(buildTimezoneRequiredReply());
           return;
         }
 
-        const [, d, m, y, h, min] = match;
-        const date = new Date(`${y}-${m}-${d}T${h}:${min}:00`);
+        const parsed = parseScheduleInput(dateString, message.author.id);
 
-        if (isNaN(date)) {
+        if (parsed.error === 'no_timezone') {
+          await message.reply(buildTimezoneRequiredReply());
+          return;
+        }
+
+        if (parsed.error === 'format') {
+          await message.reply(
+            `Date format invalid. Use \`DD/MM/YYYY HH:mm\` (${getTimezoneLabelForUser(message.author.id)}).`
+          );
+          return;
+        }
+
+        if (parsed.error === 'invalid') {
           await message.reply('Invalid date.');
           return;
         }
@@ -116,7 +164,7 @@ module.exports = async function handleScheduleButton(interaction) {
         }
 
         sched.name = name;
-        sched.timestamp = Math.floor(date.getTime() / 1000);
+        sched.timestamp = parsed.timestamp;
 
         store.update(message.guildId, schedules);
         editSession.clear(message.author.id);
@@ -136,7 +184,8 @@ module.exports = async function handleScheduleButton(interaction) {
       content:
         '**Edit mode started**\n\n' +
         'Send message:\n' +
-        '`<new name>, <DD/MM/YYYY HH:mm>`',
+        '`<new name>, <DD/MM/YYYY HH:mm>`\n' +
+        `_Jam = timezone kamu (${getTimezoneLabelForUser(interaction.user.id)})_`,
       components: [row],
       flags: MessageFlags.Ephemeral
     });

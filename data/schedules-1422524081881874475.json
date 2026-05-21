@@ -1,14 +1,1 @@
-[
-  {
-    "id": "b7ef31eb-a424-4639-a0a9-b57588673028",
-    "name": "test up",
-    "timestamp": 1779354000,
-    "createdAt": 1779350215058,
-    "reminded": {
-      "h72": false,
-      "h12": false,
-      "h1": true,
-      "m30": false
-    }
-  }
-]
+[]
