@@ -57,14 +57,13 @@ function pick(context = 'default') {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-/** Attach a contextual preface for the special user (text above embeds). */
+/** Special user: use contextual line only (no duplicate default text). */
 function withSpecialContent(message, context, payload = {}) {
   if (!isSpecialUser(message.author.id)) return payload;
 
-  const line = pick(context);
   return {
     ...payload,
-    content: payload.content ? `${line}\n${payload.content}` : line,
+    content: pick(context),
   };
 }
 
