@@ -1,37 +1,13 @@
 [
   {
-    "id": "00318145-f568-477f-bada-1a23e40bb35a",
-    "name": "Valorant Tournament",
-    "timestamp": 1770453000,
-    "createdAt": 1770017207888,
+    "id": "b7ef31eb-a424-4639-a0a9-b57588673028",
+    "name": "test up",
+    "timestamp": 1779354000,
+    "createdAt": 1779350215058,
     "reminded": {
       "h72": false,
       "h12": false,
-      "h1": false,
-      "m30": false
-    }
-  },
-  {
-    "id": "fbd21393-95d9-4251-acfe-ecbbdb17e347",
-    "name": "GeoGuessr Event",
-    "timestamp": 1771059600,
-    "createdAt": 1770017224770,
-    "reminded": {
-      "h72": false,
-      "h12": false,
-      "h1": false,
-      "m30": false
-    }
-  },
-  {
-    "id": "84b7e14d-49c3-4c22-a1d8-763feaaae81d",
-    "name": "Free Game Event",
-    "timestamp": 1771664400,
-    "createdAt": 1770017255703,
-    "reminded": {
-      "h72": false,
-      "h12": false,
-      "h1": false,
+      "h1": true,
       "m30": false
     }
   }

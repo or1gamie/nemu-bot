@@ -7,6 +7,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const startReminder = require('./services/reminderRunner');
 const buttons = require('./interactions');
 const editSession = require('./services/editSession');
+const { handleSpecialMention } = require('./services/specialMention');
 
 const client = new Client({
   intents: [
@@ -42,6 +43,12 @@ const client = new Client({
         message.reply('Error to process edit.');
         }
         return;
+    }
+
+    try {
+        await handleSpecialMention(message, client);
+    } catch (err) {
+        console.error('Special mention error:', err);
     }
 
     if (!message.content.startsWith('!')) return;

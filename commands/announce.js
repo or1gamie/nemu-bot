@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const { withSpecialContent } = require('../services/specialMention');
 
 module.exports = {
   name: 'announcemsg',
@@ -33,8 +34,10 @@ module.exports = {
 
     await channel.send({ embeds: [embed] });
 
-    await message.reply({
-      content: 'Announcement has been sent successfully.'
-    });
+    await message.reply(
+      withSpecialContent(message, 'announce_success', {
+        content: 'Announcement has been sent successfully.',
+      })
+    );
   }
 };

@@ -37,7 +37,8 @@ function add(guildId, { name, timestamp }) {
         h72: false,
         h12: false,
         h1: false,
-        m30: false
+        m30: false,
+        m5: false
     }
   };
 
@@ -76,10 +77,30 @@ function getAllGuildSchedules() {
   }));
 }
 
+/** Remove schedules whose start time has passed. Returns how many were removed. */
+function removeExpired(guildId, now = Math.floor(Date.now() / 1000)) {
+  const schedules = load(guildId);
+  const kept = schedules.filter(s => s.timestamp > now);
+  if (kept.length === schedules.length) return 0;
+  save(guildId, kept);
+  return schedules.length - kept.length;
+}
+
+function pruneAllExpired(now = Math.floor(Date.now() / 1000)) {
+  ensureDir();
+  let removed = 0;
+  for (const { guildId } of getAllGuildSchedules()) {
+    removed += removeExpired(guildId, now);
+  }
+  return removed;
+}
+
 module.exports = {
   add,
   remove,
   getAll,
   update,
-  getAllGuildSchedules
+  getAllGuildSchedules,
+  removeExpired,
+  pruneAllExpired,
 };

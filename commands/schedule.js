@@ -1,5 +1,6 @@
 const hasAdminRole = require('../utils/hasAdminRole');
 const store = require('../services/scheduleStore');
+const { withSpecialContent } = require('../services/specialMention');
 const {
   EmbedBuilder,
   ActionRowBuilder,
@@ -11,6 +12,8 @@ module.exports = {
   name: 'sched',
 
     async execute(message, args) {
+    store.removeExpired(message.guildId);
+
     const sub = args.shift()?.toLowerCase();
 
     if (!sub) {
@@ -66,14 +69,18 @@ function addSchedule(message, args) {
       `**${entry.name}**\n<t:${entry.timestamp}:F>  <t:${entry.timestamp}:R>`
     );
 
-  message.channel.send({ embeds: [embed] });
+  message.channel.send(
+    withSpecialContent(message, 'sched_add', { embeds: [embed] })
+  );
 }
 
 function listSchedules(message) {
   const schedules = store.getAll(message.guildId);
 
   if (schedules.length === 0) {
-    return message.reply('No schedules found.');
+    return message.reply(
+      withSpecialContent(message, 'sched_empty', { content: 'No schedules found.' })
+    );
   }
 
   const isAdmin = hasAdminRole(message.member);
@@ -109,10 +116,12 @@ function listSchedules(message) {
     rows.push(row);
   });
 
-  message.channel.send({
-    embeds: [embed],
-    components: rows.slice(0, 5) 
-  });
+  message.channel.send(
+    withSpecialContent(message, 'sched_list', {
+      embeds: [embed],
+      components: rows.slice(0, 5),
+    })
+  );
 }
 
 function deleteSchedule(message, args) {
@@ -136,5 +145,7 @@ function deleteSchedule(message, args) {
       `**${removed.name}**\n<t:${removed.timestamp}:F>`
     );
 
-  message.channel.send({ embeds: [embed] });
+  message.channel.send(
+    withSpecialContent(message, 'sched_delete', { embeds: [embed] })
+  );
 }
